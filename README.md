@@ -1,4 +1,4 @@
 # IdeaHacks2025 @ UCLA
-##Basim, Chien-Mu, Jingyao, Neil, Joshua
-###Welcome!
+## Basim, Chien-Mu, Jingyao, Neil, Joshua
+### Welcome!
 This repository is for files relating to our 2025 IdeaHacks project.
