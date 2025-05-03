@@ -1,25 +1,29 @@
-from rpi_ws281x import *
+from rpi_ws281x import Adafruit_NeoPixel, Color
 import time
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 
-LED_COUNT = 24
-LED_PIN = 18
-
-def colorWipe(strip, color, wait_ms=50):
-    """Wipe color across display a pixel at a time."""
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, color)
-        strip.show()
-        time.sleep(wait_ms/1000.0)
+# LED strip configuration
+LED_COUNT = 24         # Number of LED pixels.
+LED_PIN = 18           # GPIO pin connected to the pixels (must support PWM!).
 
 class LEDController:
-    def __init__(self):
-        self.strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, 800000, 10, False, 65, 0)
+    def __init__(self, queue):
+        self.queue = queue
+        self.strip = Adafruit_NeoPixel(
+            LED_COUNT, LED_PIN, 800000, 10, False, 65, 0
+        )
         self.strip.begin()
-        self.queue = Queue()  # For receiving commands
+
+    def colorWipe(self, color, wait_ms=50):
+        for i in range(self.strip.numPixels()):
+            self.strip.setPixelColor(i, color)
+            self.strip.show()
+            time.sleep(wait_ms / 1000.0)
+
+    def clear(self):
+        self.colorWipe(Color(0, 0, 0), 10)
 
     def think(self, cycles=3, speed=0.1):
-        """Pulsing blue animation for thinking state"""
         for _ in range(cycles):
             # Fade in
             for i in range(0, 100, 5):
@@ -28,7 +32,7 @@ class LEDController:
                     self.strip.setPixelColor(led, color)
                 self.strip.show()
                 time.sleep(speed)
-            
+
             # Fade out
             for i in range(100, 0, -5):
                 color = Color(0, 0, int(i * 2.55))
@@ -38,24 +42,21 @@ class LEDController:
                 time.sleep(speed)
 
     def answer(self, color=Color(0, 255, 0), duration=2):
-        """Green spiral animation for answering state"""
         start_time = time.time()
         while time.time() - start_time < duration:
             for i in range(self.strip.numPixels()):
-                # Set current pixel and the one opposite to it
+                opposite = (i + LED_COUNT // 2) % LED_COUNT
                 self.strip.setPixelColor(i, color)
-                opposite = (i + LED_COUNT//2) % LED_COUNT
                 self.strip.setPixelColor(opposite, color)
                 self.strip.show()
                 time.sleep(0.05)
-                # Turn off previous pixels
-                self.strip.setPixelColor(i, Color(0,0,0))
-                self.strip.setPixelColor(opposite, Color(0,0,0))
-        
+                self.strip.setPixelColor(i, Color(0, 0, 0))
+                self.strip.setPixelColor(opposite, Color(0, 0, 0))
+
         # Final confirmation flash
         for _ in range(3):
-            colorWipe(self.strip, color, 10)
-            colorWipe(self.strip, Color(0,0,0), 10)
+            self.colorWipe(color, 10)
+            self.colorWipe(Color(0, 0, 0), 10)
 
     def run(self):
         while True:
@@ -66,49 +67,38 @@ class LEDController:
                 elif command == "answer":
                     self.answer()
                 elif command == "clear":
-                    colorWipe(self.strip, Color(0, 0, 0))
-            time.sleep(0.1)  # Prevents CPU overload
+                    self.clear()
+            time.sleep(0.1)
 
-if __name__ == "__main__":
-    # Create and start controller
-    controller = LEDController()
-    controller_process = Process(target=controller.run)
-    controller_process.start()
-
-    # Example commands
-    try:
-        controller.queue.put("think")    # Start thinking animation
-        time.sleep(2)
-        controller.queue.put("answer")   # Switch to answer animation
-        time.sleep(2)
-        controller.queue.put("clear")    # Turn off LEDs
-        
-        # Keep process running
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        controller.queue.put("clear")
-        controller_process.terminate()
-
-
-# example main.py
 
 # from multiprocessing import Process, Queue
 # import time
+# from leds import LEDController
 
-# def main():
-#     # Start LED controller in a separate process
-#     from led_controller import LEDController
-#     controller_process = Process(target=LEDController().run)
-#     controller_process.start()
+# main function for testing, comment out later
 
-#     # Example: Send commands to the LED controller
-#     led_queue = LEDController().queue  # Shared queue
-#     led_queue.put("think")    # Start thinking animation
-#     time.sleep(2)
-#     led_queue.put("answer")   # Switch to answer animation
-#     time.sleep(2)
-#     led_queue.put("clear")    # Turn off LEDs
+from multiprocessing import Process
 
-# if __name__ == "__main__":
-#     main()
+def main():
+    queue = Queue()
+    controller = LEDController(queue)
+    controller_process = Process(target=controller.run)
+    controller_process.start()
+
+    try:
+        # Send commands to the LED controller
+        queue.put("think")
+        time.sleep(2)
+        queue.put("answer")
+        time.sleep(2)
+        queue.put("clear")
+
+        # Keep main process alive
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        queue.put("clear")
+        controller_process.terminate()
+
+if __name__ == "__main__":
+    main()
