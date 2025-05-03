@@ -7,7 +7,7 @@ language = 'en'
 
 pygame.mixer.init()
 
-def say(self, text = "default response"):
+def say(text = "default response"):
     myobj = gTTS(text=text, lang=language, slow=False)
 
     myobj.save("speech.mp3")
@@ -23,6 +23,4 @@ def say(self, text = "default response"):
             os.remove("speech.mp3")
 
 # example code
-#
-# tts = textToSpeech()
-# tts.say("hello")
+# say("hello")
