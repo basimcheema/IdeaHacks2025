@@ -42,7 +42,7 @@ client = OpenAI(
 )
 
 messages = [
-    {"role": "system", "content": "You are a very concise AI assistent named chat that limit his responses to 10-30 words"}
+    {"role": "system", "content": "You are a very concise AI assistent named 'Terminator' that limit his responses to 10-30 words"}
 ]
 
 status = True
