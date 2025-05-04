@@ -32,11 +32,11 @@ model = WhisperModel("base", device="cpu", compute_type="int8")  # Use "cuda" if
 # code for feeding prompt to DeepSeek
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key="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",
+    api_key="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",
 )
 
 messages = [
-    {"role": "system", "content": "You are a normal LLM but you never use emojis and you communicate very concisely"}
+    {"role": "system", "content": "You are a very concise AI assistent named chat that limit his responses to 2 sentences"}
 ]
 
 
@@ -85,20 +85,24 @@ try:
         promptString = "".join([seg.text for seg in segments])
         print(f"\nUser said: {promptString}")
 
+        if (promptString == ""):
+            continue
 
         # Respond using LLM
         response = client.chat.completions.create(
             model="deepseek/deepseek-chat:free",
             messages=[
-                {"role": "user", "content": promptString},
+                {"role": "user", "content": promptString}
             ]
         )
+
+
         message_limit += 1
         
         if message_limit > 2:
             try:
-                messages.remove[1]
-                messages.remove[1]
+                messages.pop(1)
+                messages.pop(1) 
             except Exception as e:
                 print(e)
 
@@ -107,14 +111,19 @@ try:
         # Append user message to history
         messages.append({"role": "user", "content": promptString})
 
+
         # Get assistant response
         response = client.chat.completions.create(
             model="deepseek/deepseek-chat:free",
-            messages=messages
+            messages=[
+                {"role": "system", "content": "You are a very concise AI assistent named chat that limit his responses to 2 sentences"},
+                {"role": "user", "content": promptString},
+            ]
         )
 
+
         reply = response.choices[0].message.content
-        messages.append({"role": "assistant", "content": reply})
+        messages.append({"role": "system", "content": reply})
 
 
         print(f"\n Response:\n{response.choices[0].message.content}")
