@@ -12,7 +12,7 @@ import wave
 import struct
 import base64
 import requests
-from picamera2 import Picamera2
+# from picamera2 import Picamera2
 
 language = 'en'
 
@@ -53,11 +53,11 @@ def encode_image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
     
-# start camera
+'''# start camera
 picam2 = Picamera2()
 picam2.configure(picam2.create_still_configuration())
 picam2.start()
-# sleep(2)  # Give it time to warm up
+# sleep(2)  # Give it time to warm up'''
 
 status = True
 
@@ -97,7 +97,7 @@ try:
             if keyword_index >= 0:
                 # hotword detected
                 print("I'm listening...")
-                picam2.capture_file(IMAGE_OUTPUT_PATH)
+                os.system(f"rpicam-still -o ~{IMAGE_OUTPUT_PATH}")
                 say("I am listening")
                 break
 
