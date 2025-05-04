@@ -1,3 +1,5 @@
+from gtts import gTTS
+import pygame
 from warnings import catch_warnings
 from faster_whisper import WhisperModel
 import os
@@ -9,6 +11,10 @@ import time
 import wave
 import struct
 
+language = 'en'
+
+pygame.mixer.init()
+pygame.mixer.set_num_channels(1)  
 
 promptAudio = [] # audio frames get appended here
 AUDIO_OUTPUT_PATH = "recording.wav" # update
@@ -41,6 +47,27 @@ messages = [
 
 status = True
 
+def say(text="default response"):
+    try:
+        # Stop any currently playing audio
+        pygame.mixer.Channel(0).stop()
+        
+        # Clean up previous file if exists
+        if os.path.exists("speech.mp3"):
+            os.remove("speech.mp3")
+            print("old file removed")
+        
+        # Generate new speech file
+        tts = gTTS(text=text, lang=language, slow=False)
+        tts.save("speech.mp3")
+        
+        # Load and play without delay
+        sound = pygame.mixer.Sound("speech.mp3")
+        pygame.mixer.Channel(0).play(sound)
+        
+    except Exception as e:
+        print(e)
+
 try: 
     while True:
         print("\nSay the wake word...")
@@ -56,6 +83,7 @@ try:
             if keyword_index >= 0:
                 # hotword detected
                 print("I'm listening...")
+                say("I am listening)
                 break
 
                 #begin recording prompt
@@ -121,8 +149,12 @@ try:
 
         print(f"\n Response:\n{response.choices[0].message.content}")
         print("\n--- Ready for the next prompt ---\n")
+
+        
         if not status:
             raise KeyboardInterrupt
+
+        say(response.choices[0].message.content)
 except KeyboardInterrupt:
     print("Exiting gracefully.")
     recorder.delete()
