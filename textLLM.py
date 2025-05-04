@@ -118,6 +118,7 @@ try:
             continue
         if ( "terminate" in promptString.lower()):
             status = False
+            say("Terminating")
             break
 
 
