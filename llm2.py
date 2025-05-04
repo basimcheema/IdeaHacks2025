@@ -132,6 +132,8 @@ try:
         if (promptString == ""):
             continue
         if ( "terminate" in promptString.lower()):
+            say("Terminating")
+            time.sleep(2)
             status = False
             break
 
